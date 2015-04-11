@@ -18,6 +18,7 @@
  */
 #include <linux/module.h>
 #include <linux/file.h>
+#include <linux/fdtable.h>
 #include <linux/binfmts.h>
 #include <linux/mount.h>
 #include <linux/mman.h>
@@ -313,6 +314,63 @@ int ima_file_check(struct file *file, int mask, int opened)
 				   FILE_CHECK, opened);
 }
 EXPORT_SYMBOL_GPL(ima_file_check);
+
+/* derived from file_to_av() in security/selinux/hooks.c */
+static inline u32 ima_file_to_mask(struct file *file)
+{
+	int open_mask = 0;
+
+	if (file->f_mode & FMODE_READ)
+		open_mask |= MAY_READ;
+	if (file->f_mode & FMODE_WRITE)
+		open_mask |= MAY_WRITE;
+	if (file->f_mode & FMODE_EXEC)
+		open_mask |= MAY_EXEC;
+
+	return open_mask;
+}
+
+/* derived from match_file() in security/selinux/hooks.c */
+static int match_file(const void *p, struct file *file, unsigned fd)
+{
+	return fd + 1;
+}
+
+/**
+ * ima_bprm_committing_creds - check inherited file descriptors
+ * @bprm: contains the linux_binprm structure
+ *
+ * Measure files whose descriptors have been inherited by the parent
+ * process. Measurement is performed only if a rule with the new hook
+ * identifier INHERIT_FD_CHECK is present in the policy.
+ *
+ * This function (derived from fs/exec.c:flush_old_files) does not
+ * return an exit code.
+ */
+void ima_bprm_committing_creds(struct linux_binprm *bprm)
+{
+	struct file *file;
+	unsigned n;
+	int mask;
+
+	n = iterate_fd(current->files, 0, match_file, NULL);
+	if (!n) /* none found? */
+		return;
+
+	do {
+		file = fget(n - 1);
+		if (!file)
+			continue;
+
+		mask = ima_file_to_mask(file);
+		/* ignore errors so that other file descriptors are processed */
+		process_measurement(file,
+				    mask & (MAY_READ | MAY_WRITE | MAY_EXEC),
+				    INHERIT_FD_CHECK, FILE_OPENED);
+		fput(file);
+	} while ((n = iterate_fd(current->files, n, match_file, NULL)) != 0);
+}
+EXPORT_SYMBOL_GPL(ima_bprm_committing_creds);
 
 /**
  * ima_module_check - based on policy, collect/store/appraise measurement.

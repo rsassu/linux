@@ -252,6 +252,7 @@ int security_bprm_check(struct linux_binprm *bprm)
 void security_bprm_committing_creds(struct linux_binprm *bprm)
 {
 	security_ops->bprm_committing_creds(bprm);
+	ima_bprm_committing_creds(bprm);
 }
 
 void security_bprm_committed_creds(struct linux_binprm *bprm)

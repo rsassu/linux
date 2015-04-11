@@ -20,6 +20,7 @@ extern void ima_file_free(struct file *file);
 extern int ima_file_mmap(struct file *file, unsigned long prot);
 extern int ima_module_check(struct file *file);
 extern int ima_fw_from_file(struct file *file, char *buf, size_t size);
+extern void ima_bprm_committing_creds(struct linux_binprm *bprm);
 
 #else
 static inline int ima_bprm_check(struct linux_binprm *bprm)
@@ -50,6 +51,10 @@ static inline int ima_module_check(struct file *file)
 static inline int ima_fw_from_file(struct file *file, char *buf, size_t size)
 {
 	return 0;
+}
+
+static inline void ima_bprm_committing_creds(struct linux_binprm *bprm)
+{
 }
 
 #endif /* CONFIG_IMA */

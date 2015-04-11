@@ -160,7 +160,8 @@ const char *ima_d_path(struct path *path, char **pathbuf);
 
 /* IMA policy related functions */
 enum ima_hooks { FILE_CHECK = 1, MMAP_CHECK, BPRM_CHECK, MODULE_CHECK,
-		 FIRMWARE_CHECK, POST_SETATTR, RDWR_VIOLATION_CHECK };
+		 FIRMWARE_CHECK, POST_SETATTR, RDWR_VIOLATION_CHECK,
+		 INHERIT_FD_CHECK };
 
 int ima_match_policy(struct file *file, enum ima_hooks func, int mask,
 		     int flags);

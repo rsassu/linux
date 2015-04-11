@@ -604,6 +604,8 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 				entry->func = MMAP_CHECK;
 			else if (strcmp(args[0].from, "BPRM_CHECK") == 0)
 				entry->func = BPRM_CHECK;
+			else if (strcmp(args[0].from, "INHERIT_FD_CHECK") == 0)
+				entry->func = INHERIT_FD_CHECK;
 			else
 				result = -EINVAL;
 			if (!result)
