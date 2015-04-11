@@ -27,6 +27,7 @@
 #define IMA_UID		0x0008
 #define IMA_FOWNER	0x0010
 #define IMA_FSUUID	0x0020
+#define IMA_MATCH_FILE	0x0040
 
 #define UNKNOWN		0
 #define MEASURE		0x0001	/* same as IMA_MEASURE */
@@ -52,6 +53,7 @@ struct ima_rule_entry {
 	u8 fsuuid[16];
 	kuid_t uid;
 	kuid_t fowner;
+	const char *match_file;
 	struct {
 		void *rule;	/* LSM file metadata specific */
 		void *args_p;	/* audit value */
@@ -161,20 +163,53 @@ static void ima_lsm_update_rules(void)
 	mutex_unlock(&ima_rules_mutex);
 }
 
+/*
+ * Match a string with simple regular expressions
+ * (only ^ and $ special characters are supported).
+ */
+static bool match_string(const char *string, const char *pattern)
+{
+	int string_len = strlen(string), pattern_len = strlen(pattern);
+	int i, start = 0, end = 0;
+
+	if (*pattern == '^') {
+		pattern++;
+		pattern_len--;
+		end = 1;
+	}
+
+	if (*(pattern + pattern_len - 1) == '$') {
+		pattern_len--;
+		start = string_len - pattern_len;
+		if (start < 0)
+			return false;
+	}
+
+	end = (end == 0) ? string_len - pattern_len + 1 : end;
+	for (i = start; i < end; i++) {
+		if (strncmp(string + i, pattern, pattern_len) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * ima_match_rules - determine whether an inode matches the measure rule.
  * @rule: a pointer to a rule
- * @inode: a pointer to an inode
+ * @file: a pointer to a file descriptor of an inode
  * @func: LIM hook identifier
  * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
  *
  * Returns true on rule match, false on failure.
  */
 static bool ima_match_rules(struct ima_rule_entry *rule,
-			    struct inode *inode, enum ima_hooks func, int mask)
+			    struct file *file, enum ima_hooks func, int mask)
 {
 	struct task_struct *tsk = current;
+	struct inode *inode = file_inode(file);
 	const struct cred *cred = current_cred();
+	const unsigned char *filename = file->f_path.dentry->d_name.name;
 	int i;
 
 	if ((rule->flags & IMA_FUNC) &&
@@ -192,6 +227,9 @@ static bool ima_match_rules(struct ima_rule_entry *rule,
 	if ((rule->flags & IMA_UID) && !uid_eq(rule->uid, cred->uid))
 		return false;
 	if ((rule->flags & IMA_FOWNER) && !uid_eq(rule->fowner, inode->i_uid))
+		return false;
+	if ((rule->flags & IMA_MATCH_FILE) &&
+	    !match_string(filename, rule->match_file))
 		return false;
 	for (i = 0; i < MAX_LSM_RULES; i++) {
 		int rc = 0;
@@ -261,7 +299,7 @@ static int get_subaction(struct ima_rule_entry *rule, int func)
 
 /**
  * ima_match_policy - decision based on LSM and other conditions
- * @inode: pointer to an inode for which the policy decision is being made
+ * @file: pointer to fd of an inode for which the policy decision is being made
  * @func: IMA hook identifier
  * @mask: requested action (MAY_READ | MAY_WRITE | MAY_APPEND | MAY_EXEC)
  *
@@ -272,7 +310,7 @@ static int get_subaction(struct ima_rule_entry *rule, int func)
  * as elements in the list are never deleted, nor does the list
  * change.)
  */
-int ima_match_policy(struct inode *inode, enum ima_hooks func, int mask,
+int ima_match_policy(struct file *file, enum ima_hooks func, int mask,
 		     int flags)
 {
 	struct ima_rule_entry *entry;
@@ -283,7 +321,7 @@ int ima_match_policy(struct inode *inode, enum ima_hooks func, int mask,
 		if (!(entry->action & actmask))
 			continue;
 
-		if (!ima_match_rules(entry, inode, func, mask))
+		if (!ima_match_rules(entry, file, func, mask))
 			continue;
 
 		action |= entry->flags & IMA_ACTION_FLAGS;
@@ -374,7 +412,7 @@ enum {
 	Opt_subj_user, Opt_subj_role, Opt_subj_type,
 	Opt_func, Opt_mask, Opt_fsmagic, Opt_uid, Opt_fowner,
 	Opt_appraise_type, Opt_fsuuid, Opt_permit_directio,
-	Opt_no_cache,
+	Opt_no_cache, Opt_match_file,
 };
 
 static match_table_t policy_tokens = {
@@ -398,6 +436,7 @@ static match_table_t policy_tokens = {
 	{Opt_appraise_type, "appraise_type=%s"},
 	{Opt_permit_directio, "permit_directio"},
 	{Opt_no_cache, "no_cache"},
+	{Opt_match_file, "match_file="},
 	{Opt_err, NULL}
 };
 
@@ -652,6 +691,18 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			break;
 		case Opt_no_cache:
 			entry->flags |= IMA_NO_CACHE;
+			break;
+		case Opt_match_file:
+			ima_log_string(ab, "match_file", args[0].from);
+
+			if (entry->match_file)
+				result = -EINVAL;
+
+			entry->match_file = kstrdup(args[0].from, GFP_KERNEL);
+			if (!entry->match_file)
+				result = -ENOMEM;
+
+			entry->flags |= IMA_MATCH_FILE;
 			break;
 		case Opt_err:
 			ima_log_string(ab, "UNKNOWN", p);

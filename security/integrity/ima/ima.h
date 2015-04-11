@@ -139,7 +139,7 @@ static inline unsigned long ima_hash_key(u8 *digest)
 }
 
 /* LIM API function definitions */
-int ima_get_action(struct inode *inode, int mask, int function);
+int ima_get_action(struct file *file, int mask, int function);
 int ima_must_measure(struct inode *inode, int mask, int function);
 int ima_collect_measurement(struct integrity_iint_cache *iint,
 			    struct file *file,
@@ -162,7 +162,7 @@ const char *ima_d_path(struct path *path, char **pathbuf);
 enum ima_hooks { FILE_CHECK = 1, MMAP_CHECK, BPRM_CHECK, MODULE_CHECK,
 		 FIRMWARE_CHECK, POST_SETATTR, RDWR_VIOLATION_CHECK };
 
-int ima_match_policy(struct inode *inode, enum ima_hooks func, int mask,
+int ima_match_policy(struct file *file, enum ima_hooks func, int mask,
 		     int flags);
 void ima_init_policy(void);
 void ima_update_policy(void);
