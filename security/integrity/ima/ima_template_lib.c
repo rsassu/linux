@@ -387,3 +387,12 @@ out:
 	return ima_eventdigest_init_common(cur_digest, cur_digestsize,
 					   hash_algo, field_data);
 }
+
+int ima_process_uid_init(struct ima_event_data *event_data,
+			 struct ima_field_data *field_data)
+{
+	u32 process_uid = from_kuid(&init_user_ns, current_uid());
+
+	return ima_write_template_field_data((u32 *)&process_uid, sizeof(u32),
+					     DATA_FMT_UINT, field_data);
+}

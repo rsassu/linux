@@ -40,4 +40,6 @@ int ima_eventsig_init(struct ima_event_data *event_data,
 		      struct ima_field_data *field_data);
 int ima_exec_digest_ng_init(struct ima_event_data *event_data,
 			    struct ima_field_data *field_data);
+int ima_process_uid_init(struct ima_event_data *event_data,
+			 struct ima_field_data *field_data);
 #endif /* __LINUX_IMA_TEMPLATE_LIB_H */

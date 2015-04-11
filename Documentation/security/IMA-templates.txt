@@ -66,7 +66,8 @@ descriptors by adding their identifier to the format string
            prefix is shown only if the hash algorithm is not SHA1 or MD5);
  - 'n-ng': the name of the event, without size limitations;
  - 'sig': the file signature;
- - 'exec-d-ng': the digest of the main process's executable.
+ - 'exec-d-ng': the digest of the main process's executable;
+ - 'p-uid': the real UID of the current process.
 
 
 Below, there is the list of defined template descriptors:
