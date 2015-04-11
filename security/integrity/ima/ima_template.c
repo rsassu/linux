@@ -14,6 +14,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define ext_fmt "exec-d-ng|p-uid|hook-id|hook-mask"
 
 #include <crypto/hash_info.h>
 
@@ -106,6 +107,14 @@ static int __init ima_template_fmt_setup(char *str)
 	return 1;
 }
 __setup("ima_template_fmt=", ima_template_fmt_setup);
+
+static bool ima_ext_fmt __initdata;
+static int __init default_measure_policy_setup(char *str)
+{
+	ima_ext_fmt = 1;
+	return 1;
+}
+__setup("ima_ext_fmt", default_measure_policy_setup);
 
 static struct ima_template_desc *lookup_template_desc(const char *name)
 {
@@ -203,7 +212,21 @@ struct ima_template_desc *ima_template_desc_current(void)
 int __init ima_init_template(void)
 {
 	struct ima_template_desc *template = ima_template_desc_current();
-	int result;
+	int num_templates = ARRAY_SIZE(defined_templates);
+	int result, fmt_len;
+	char *new_fmt;
+
+	if (ima_ext_fmt) {
+		fmt_len = strlen(template->fmt) + strlen(ext_fmt) + 2;
+		new_fmt = kmalloc(fmt_len, GFP_KERNEL);
+		if (!new_fmt)
+			return -ENOMEM;
+
+		snprintf(new_fmt, fmt_len, "%s|%s", template->fmt, ext_fmt);
+		ima_template = defined_templates + num_templates - 1;
+		ima_template->fmt = new_fmt;
+		template = ima_template;
+	}
 
 	result = template_desc_init_fields(template->fmt,
 					   &(template->fields),

@@ -1370,6 +1370,11 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			The builtin appraise policy appraises all files
 			owned by uid=0.
 
+	ima_ext_fmt	[IMA]
+			Record a measurement with detailed information by
+			adding the fields 'exec-d-ng|p-uuid|hook-id|hook-mask'
+			to the chosen template format.
+
 	ima_hash=	[IMA]
 			Format: { md5 | sha1 | rmd160 | sha256 | sha384
 				   | sha512 | ... }
