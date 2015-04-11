@@ -43,7 +43,7 @@ enum lsm_rule_types { LSM_OBJ_USER, LSM_OBJ_ROLE, LSM_OBJ_TYPE,
 	LSM_SUBJ_USER, LSM_SUBJ_ROLE, LSM_SUBJ_TYPE
 };
 
-enum policy_types { DEFAULT_TCB = 1, EXEC };
+enum policy_types { DEFAULT_TCB = 1, EXEC, READ_EXEC };
 
 struct ima_rule_entry {
 	struct list_head list;
@@ -113,6 +113,22 @@ static struct ima_rule_entry exec_rules[] = {
 	 .flags = IMA_FUNC | IMA_MASK | IMA_NO_CACHE},
 };
 
+static struct ima_rule_entry read_exec_rules[] = {
+	{.action = MEASURE, .func = FILE_CHECK, .mask = MAY_READ,
+	 .uid = GLOBAL_ROOT_UID, .fowner = GLOBAL_ROOT_UID, .match_file = ".so$",
+	 .flags = IMA_FUNC | IMA_MASK | IMA_UID | IMA_FOWNER | IMA_MATCH_FILE},
+	{.action = MEASURE, .func = FILE_CHECK, .mask = MAY_READ,
+	 .uid = GLOBAL_ROOT_UID, .fowner = GLOBAL_ROOT_UID, .match_file = ".so",
+	 .flags = IMA_FUNC | IMA_MASK | IMA_UID | IMA_FOWNER | IMA_MATCH_FILE},
+	{.action = MEASURE, .func = FILE_CHECK, .mask = MAY_READ,
+	 .uid = GLOBAL_ROOT_UID, .fowner = GLOBAL_ROOT_UID, .match_file = ".^ld-so.cache$",
+	 .flags = IMA_FUNC | IMA_MASK | IMA_UID | IMA_FOWNER | IMA_MATCH_FILE},
+	{.action = MEASURE, .func = FILE_CHECK, .mask = MAY_READ, .uid = GLOBAL_ROOT_UID,
+	 .flags = IMA_FUNC | IMA_MASK | IMA_UID | IMA_NO_CACHE},
+	{.action = MEASURE, .func = INHERIT_FD_CHECK, .mask = MAY_READ, .uid = GLOBAL_ROOT_UID,
+	 .flags = IMA_FUNC | IMA_MASK | IMA_UID | IMA_NO_CACHE},
+};
+
 static struct ima_rule_entry default_appraise_rules[] = {
 	{.action = DONT_APPRAISE, .fsmagic = PROC_SUPER_MAGIC, .flags = IMA_FSMAGIC},
 	{.action = DONT_APPRAISE, .fsmagic = SYSFS_MAGIC, .flags = IMA_FSMAGIC},
@@ -159,6 +175,8 @@ static int __init policy_setup(char *str)
 		ima_policy = DEFAULT_TCB;
 	else if (strcmp(str, "exec") == 0)
 		ima_policy = EXEC;
+	else if (strcmp(str, "read_exec") == 0)
+		ima_policy = READ_EXEC;
 
 	return 1;
 }
@@ -428,6 +446,12 @@ void __init ima_init_policy(void)
 		break;
 	case EXEC:
 		__add_rule_default(exec_rules);
+		__add_rule_default(module_firmware_rules);
+		break;
+	case READ_EXEC:
+		__add_rule_default(dont_measure_rules);
+		__add_rule_default(exec_rules);
+		__add_rule_default(read_exec_rules);
 		__add_rule_default(module_firmware_rules);
 		break;
 	default:

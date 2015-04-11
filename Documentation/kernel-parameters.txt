@@ -1387,7 +1387,7 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			The measurement policy to load during IMA setup.
 			Specyfing "tcb" as a value is equivalent to having
 			added the "ima_tcb" kernel parameter.
-			Format: { "tcb" | "exec" }
+			Format: { "tcb" | "exec" | "read_exec" }
 
 	ima_tcb		[IMA]
 			Load a policy which meets the needs of the Trusted

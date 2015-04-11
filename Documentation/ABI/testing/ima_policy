@@ -103,3 +103,16 @@ Description:
 		It also measures inodes during the execution of the BPRM_CHECK,
 		MMAP_CHECK, MODULE_CHECK and FIRMWARE_CHECK IMA hooks, for
 		each process accessing them.
+
+		read_exec policy:
+			<dont_measure rules in the default policy>
+			<measure rules in exec policy>
+			measure func=FILE_CHECK mask=MAY_READ uid=0 fowner=0 match_file='.so$'
+			measure func=FILE_CHECK mask=MAY_READ uid=0 fowner=0 match_file='.so.'
+			measure func=FILE_CHECK mask=MAY_READ uid=0 fowner=0 match_file='^ld-so.cache$'
+			measure func=INHERIT_FD_CHECK mask=MAY_READ uid=0 no_cache
+			measure func=FILE_CHECK mask=MAY_READ uid=0 no_cache
+
+		The read_exec policy performs the same measurements of the
+		exec policy. In addition, it measures reads and file descriptors
+		inherited for each root process.
