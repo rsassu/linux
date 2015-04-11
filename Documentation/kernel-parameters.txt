@@ -1383,6 +1383,12 @@ bytes respectively. Such letter suffixes can also be entirely omitted.
 			The list of supported hash algorithms is defined
 			in crypto/hash_info.h.
 
+	ima_policy=	[IMA]
+			The measurement policy to load during IMA setup.
+			Specyfing "tcb" as a value is equivalent to having
+			added the "ima_tcb" kernel parameter.
+			Format: { "tcb" | "exec" }
+
 	ima_tcb		[IMA]
 			Load a policy which meets the needs of the Trusted
 			Computing Base.  This means IMA will measure all

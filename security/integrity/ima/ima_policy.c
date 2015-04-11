@@ -43,6 +43,8 @@ enum lsm_rule_types { LSM_OBJ_USER, LSM_OBJ_ROLE, LSM_OBJ_TYPE,
 	LSM_SUBJ_USER, LSM_SUBJ_ROLE, LSM_SUBJ_TYPE
 };
 
+enum policy_types { DEFAULT_TCB = 1, EXEC };
+
 struct ima_rule_entry {
 	struct list_head list;
 	int action;
@@ -72,7 +74,7 @@ struct ima_rule_entry {
  * normal users can easily run the machine out of memory simply building
  * and running executables.
  */
-static struct ima_rule_entry default_rules[] = {
+static struct ima_rule_entry dont_measure_rules[] = {
 	{.action = DONT_MEASURE, .fsmagic = PROC_SUPER_MAGIC, .flags = IMA_FSMAGIC},
 	{.action = DONT_MEASURE, .fsmagic = SYSFS_MAGIC, .flags = IMA_FSMAGIC},
 	{.action = DONT_MEASURE, .fsmagic = DEBUGFS_MAGIC, .flags = IMA_FSMAGIC},
@@ -82,14 +84,33 @@ static struct ima_rule_entry default_rules[] = {
 	{.action = DONT_MEASURE, .fsmagic = SECURITYFS_MAGIC, .flags = IMA_FSMAGIC},
 	{.action = DONT_MEASURE, .fsmagic = SELINUX_MAGIC, .flags = IMA_FSMAGIC},
 	{.action = DONT_MEASURE, .fsmagic = CGROUP_SUPER_MAGIC, .flags = IMA_FSMAGIC},
+};
+
+static struct ima_rule_entry default_rules[] = {
 	{.action = MEASURE, .func = MMAP_CHECK, .mask = MAY_EXEC,
 	 .flags = IMA_FUNC | IMA_MASK},
 	{.action = MEASURE, .func = BPRM_CHECK, .mask = MAY_EXEC,
 	 .flags = IMA_FUNC | IMA_MASK},
 	{.action = MEASURE, .func = FILE_CHECK, .mask = MAY_READ, .uid = GLOBAL_ROOT_UID,
 	 .flags = IMA_FUNC | IMA_MASK | IMA_UID},
+};
+
+static struct ima_rule_entry module_firmware_rules[] = {
 	{.action = MEASURE, .func = MODULE_CHECK, .flags = IMA_FUNC},
 	{.action = MEASURE, .func = FIRMWARE_CHECK, .flags = IMA_FUNC},
+};
+
+static struct ima_rule_entry exec_rules[] = {
+	{.action = MEASURE, .func = MMAP_CHECK, .mask = MAY_EXEC,
+	 .fowner = GLOBAL_ROOT_UID, .match_file = ".so$",
+	 .flags = IMA_FUNC | IMA_MASK | IMA_FOWNER | IMA_MATCH_FILE},
+	{.action = MEASURE, .func = MMAP_CHECK, .mask = MAY_EXEC,
+	 .fowner = GLOBAL_ROOT_UID, .match_file = ".so.",
+	 .flags = IMA_FUNC | IMA_MASK | IMA_FOWNER | IMA_MATCH_FILE},
+	{.action = MEASURE, .func = MMAP_CHECK, .mask = MAY_EXEC,
+	 .flags = IMA_FUNC | IMA_MASK | IMA_NO_CACHE},
+	{.action = MEASURE, .func = BPRM_CHECK, .mask = MAY_EXEC,
+	 .flags = IMA_FUNC | IMA_MASK | IMA_NO_CACHE},
 };
 
 static struct ima_rule_entry default_appraise_rules[] = {
@@ -118,13 +139,30 @@ static struct list_head *ima_rules;
 
 static DEFINE_MUTEX(ima_rules_mutex);
 
-static bool ima_use_tcb __initdata;
+static int ima_policy __initdata;
 static int __init default_measure_policy_setup(char *str)
 {
-	ima_use_tcb = 1;
+	if (ima_policy)
+		return 1;
+
+	ima_policy = DEFAULT_TCB;
 	return 1;
 }
 __setup("ima_tcb", default_measure_policy_setup);
+
+static int __init policy_setup(char *str)
+{
+	if (ima_policy)
+		return 1;
+
+	if (strcmp(str, "tcb") == 0)
+		ima_policy = DEFAULT_TCB;
+	else if (strcmp(str, "exec") == 0)
+		ima_policy = EXEC;
+
+	return 1;
+}
+__setup("ima_policy=", policy_setup);
 
 static bool ima_use_appraise_tcb __initdata;
 static int __init default_appraise_policy_setup(char *str)
@@ -382,8 +420,20 @@ static void __init ima_array_add_rules(struct ima_rule_entry *array,
  */
 void __init ima_init_policy(void)
 {
-	if (ima_use_tcb)
+	switch (ima_policy) {
+	case DEFAULT_TCB:
+		__add_rule_default(dont_measure_rules);
 		__add_rule_default(default_rules);
+		__add_rule_default(module_firmware_rules);
+		break;
+	case EXEC:
+		__add_rule_default(exec_rules);
+		__add_rule_default(module_firmware_rules);
+		break;
+	default:
+		break;
+	}
+
 	if (ima_use_appraise_tcb)
 		__add_rule_default(default_appraise_rules);
 
