@@ -44,6 +44,8 @@ static struct ima_template_field supported_fields[] = {
 	 .field_show = ima_show_template_uint},
 	{.field_id = "hook-id", .field_init = ima_hook_id_init,
 	 .field_show = ima_show_template_uint},
+	{.field_id = "hook-mask", .field_init = ima_hook_mask_init,
+	 .field_show = ima_show_template_uint},
 };
 
 static struct ima_template_desc *ima_template;

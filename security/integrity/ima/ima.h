@@ -61,6 +61,7 @@ struct ima_event_data {
 	int xattr_len;
 	const char *violation;
 	int function;
+	int mask;
 };
 
 /* IMA template field data definition */
@@ -112,7 +113,7 @@ int ima_calc_field_array_hash(struct ima_field_data *field_data,
 			      struct ima_digest_data *hash);
 int __init ima_calc_boot_aggregate(struct ima_digest_data *hash);
 void ima_add_violation(struct file *file, const unsigned char *filename,
-		       struct integrity_iint_cache *iint,
+		       struct integrity_iint_cache *iint, int mask,
 		       const char *op, const char *cause);
 int ima_init_crypto(void);
 void ima_putc(struct seq_file *m, void *data, int datalen);
@@ -147,7 +148,7 @@ int ima_collect_measurement(struct integrity_iint_cache *iint,
 void ima_store_measurement(struct integrity_iint_cache *iint, struct file *file,
 			   const unsigned char *filename,
 			   struct evm_ima_xattr_data *xattr_value,
-			   int xattr_len, int function);
+			   int xattr_len, int function, int mask);
 void ima_audit_measurement(struct integrity_iint_cache *iint,
 			   const unsigned char *filename);
 int ima_alloc_init_template(struct ima_event_data *event_data,

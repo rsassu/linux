@@ -79,6 +79,7 @@ __setup("ima_hash=", hash_setup);
  */
 static void ima_rdwr_violation_check(struct file *file,
 				     struct integrity_iint_cache *iint,
+				     int mask,
 				     int must_measure,
 				     char **pathbuf,
 				     const char **pathname)
@@ -106,10 +107,10 @@ static void ima_rdwr_violation_check(struct file *file,
 	*pathname = ima_d_path(&file->f_path, pathbuf);
 
 	if (send_tomtou)
-		ima_add_violation(file, *pathname, iint,
+		ima_add_violation(file, *pathname, iint, mask,
 				  "invalid_pcr", "ToMToU");
 	if (send_writers)
-		ima_add_violation(file, *pathname, iint,
+		ima_add_violation(file, *pathname, iint, mask,
 				  "invalid_pcr", "open_writers");
 }
 
@@ -195,7 +196,7 @@ static int process_measurement(struct file *file, int mask, int function,
 	}
 
 	if (violation_check) {
-		ima_rdwr_violation_check(file, iint, action & IMA_MEASURE,
+		ima_rdwr_violation_check(file, iint, mask, action & IMA_MEASURE,
 					 &pathbuf, &pathname);
 		if (!action) {
 			rc = 0;
@@ -235,7 +236,8 @@ static int process_measurement(struct file *file, int mask, int function,
 
 	if (action & IMA_MEASURE)
 		ima_store_measurement(iint, file, pathname,
-				      xattr_value, xattr_len, function);
+				      xattr_value, xattr_len,
+				      function, mask);
 	if (action & IMA_APPRAISE_SUBMASK)
 		rc = ima_appraise_measurement(function, iint, file, pathname,
 					      xattr_value, xattr_len, opened);

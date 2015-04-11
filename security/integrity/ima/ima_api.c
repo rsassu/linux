@@ -126,13 +126,13 @@ int ima_store_template(struct ima_template_entry *entry,
  * value is invalidated.
  */
 void ima_add_violation(struct file *file, const unsigned char *filename,
-		       struct integrity_iint_cache *iint,
+		       struct integrity_iint_cache *iint, int mask,
 		       const char *op, const char *cause)
 {
 	struct ima_template_entry *entry;
 	struct inode *inode = file_inode(file);
 	struct ima_event_data event_data = {iint, file, filename, NULL, 0,
-					    cause, RDWR_VIOLATION_CHECK};
+					    cause, RDWR_VIOLATION_CHECK, mask};
 	int violation = 1;
 	int result;
 
@@ -259,7 +259,7 @@ out:
 void ima_store_measurement(struct integrity_iint_cache *iint,
 			   struct file *file, const unsigned char *filename,
 			   struct evm_ima_xattr_data *xattr_value,
-			   int xattr_len, int function)
+			   int xattr_len, int function, int mask)
 {
 	static const char op[] = "add_template_measure";
 	static const char audit_cause[] = "ENOMEM";
@@ -267,7 +267,7 @@ void ima_store_measurement(struct integrity_iint_cache *iint,
 	struct inode *inode = file_inode(file);
 	struct ima_template_entry *entry;
 	struct ima_event_data event_data = {iint, file, filename, xattr_value,
-					    xattr_len, NULL, function};
+					    xattr_len, NULL, function, mask};
 	int violation = 0;
 
 	if (iint->flags & IMA_MEASURED)
