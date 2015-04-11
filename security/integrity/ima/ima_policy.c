@@ -324,6 +324,18 @@ void ima_update_policy_flag(void)
 		ima_policy_flag &= ~IMA_APPRAISE;
 }
 
+static void __init ima_array_add_rules(struct ima_rule_entry *array,
+				       int array_size, struct list_head *head)
+{
+	int i;
+
+	for (i = 0; i < array_size; i++)
+		list_add_tail(&array[i].list, head);
+}
+
+#define __add_rule_default(array) \
+	ima_array_add_rules(array, ARRAY_SIZE(array), &ima_default_rules)
+
 /**
  * ima_init_policy - initialize the default measure rules.
  *
@@ -332,24 +344,10 @@ void ima_update_policy_flag(void)
  */
 void __init ima_init_policy(void)
 {
-	int i, measure_entries, appraise_entries;
-
-	/* if !ima_use_tcb set entries = 0 so we load NO default rules */
-	measure_entries = ima_use_tcb ? ARRAY_SIZE(default_rules) : 0;
-	appraise_entries = ima_use_appraise_tcb ?
-			 ARRAY_SIZE(default_appraise_rules) : 0;
-
-	for (i = 0; i < measure_entries + appraise_entries; i++) {
-		if (i < measure_entries)
-			list_add_tail(&default_rules[i].list,
-				      &ima_default_rules);
-		else {
-			int j = i - measure_entries;
-
-			list_add_tail(&default_appraise_rules[j].list,
-				      &ima_default_rules);
-		}
-	}
+	if (ima_use_tcb)
+		__add_rule_default(default_rules);
+	if (ima_use_appraise_tcb)
+		__add_rule_default(default_appraise_rules);
 
 	ima_rules = &ima_default_rules;
 }
