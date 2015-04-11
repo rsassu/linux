@@ -235,7 +235,7 @@ static int process_measurement(struct file *file, int mask, int function,
 
 	if (action & IMA_MEASURE)
 		ima_store_measurement(iint, file, pathname,
-				      xattr_value, xattr_len);
+				      xattr_value, xattr_len, function);
 	if (action & IMA_APPRAISE_SUBMASK)
 		rc = ima_appraise_measurement(function, iint, file, pathname,
 					      xattr_value, xattr_len, opened);

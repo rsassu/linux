@@ -42,6 +42,8 @@ static struct ima_template_field supported_fields[] = {
 	 .field_show = ima_show_template_digest_ng},
 	{.field_id = "p-uid", .field_init = ima_process_uid_init,
 	 .field_show = ima_show_template_uint},
+	{.field_id = "hook-id", .field_init = ima_hook_id_init,
+	 .field_show = ima_show_template_uint},
 };
 
 static struct ima_template_desc *ima_template;

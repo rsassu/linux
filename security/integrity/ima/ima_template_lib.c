@@ -396,3 +396,14 @@ int ima_process_uid_init(struct ima_event_data *event_data,
 	return ima_write_template_field_data((u32 *)&process_uid, sizeof(u32),
 					     DATA_FMT_UINT, field_data);
 }
+
+/*
+ * ima_hook_id_init - include the current IMA hook identifier
+ */
+int ima_hook_id_init(struct ima_event_data *event_data,
+		     struct ima_field_data *field_data)
+{
+	return ima_write_template_field_data((u32 *)&event_data->function,
+					     sizeof(u32), DATA_FMT_UINT,
+					     field_data);
+}
