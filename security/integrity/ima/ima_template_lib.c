@@ -13,6 +13,7 @@
  *      Library of supported template fields.
  */
 #include <crypto/hash_info.h>
+#include <linux/file.h>
 
 #include "ima_template_lib.h"
 
@@ -326,4 +327,39 @@ int ima_eventsig_init(struct ima_event_data *event_data,
 					   field_data);
 out:
 	return rc;
+}
+
+/*
+ *  ima_exec_digest_ng_init - include the digest of the process's executable
+ */
+int ima_exec_digest_ng_init(struct ima_event_data *event_data,
+			    struct ima_field_data *field_data)
+{
+	struct integrity_iint_cache *current_iint;
+	struct file *current_file;
+	struct mm_struct *mm;
+	u8 *cur_digest = NULL, hash_algo = HASH_ALGO_SHA1;
+	u32 cur_digestsize = 0;
+
+	mm = get_task_mm(current);
+	if (!mm)
+		goto out;
+
+	current_file = get_mm_exe_file(mm);
+	mmput(mm);
+
+	if (!current_file)
+		goto out;
+
+	current_iint =  integrity_iint_find(file_inode(current_file));
+	if (!current_iint)
+		goto out_fput;
+
+	cur_digest = current_iint->ima_hash->digest;
+	cur_digestsize = current_iint->ima_hash->length;
+out_fput:
+	fput(current_file);
+out:
+	return ima_eventdigest_init_common(cur_digest, cur_digestsize,
+					   hash_algo, field_data);
 }
