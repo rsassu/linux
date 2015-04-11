@@ -270,7 +270,7 @@ void ima_store_measurement(struct integrity_iint_cache *iint,
 					    xattr_len, NULL, function, mask};
 	int violation = 0;
 
-	if (iint->flags & IMA_MEASURED)
+	if (iint->flags & IMA_MEASURED && !(iint->flags & IMA_NO_CACHE))
 		return;
 
 	result = ima_alloc_init_template(&event_data, &entry);

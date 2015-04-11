@@ -163,7 +163,7 @@ static int process_measurement(struct file *file, int mask, int function,
 	struct ima_template_desc *template_desc;
 	char *pathbuf = NULL;
 	const char *pathname = NULL;
-	int rc = -ENOMEM, action, must_appraise;
+	int rc = -ENOMEM, action, must_appraise, done_mask;
 	struct evm_ima_xattr_data *xattr_value = NULL, **xattr_ptr = NULL;
 	int xattr_len = 0;
 	bool violation_check;
@@ -209,8 +209,10 @@ static int process_measurement(struct file *file, int mask, int function,
 	 *  IMA_AUDIT, IMA_AUDITED)
 	 */
 	iint->flags |= action;
+	done_mask = action & IMA_NO_CACHE ?
+		IMA_DONE_MASK & ~IMA_MEASURED : IMA_DONE_MASK;
 	action &= IMA_DO_MASK;
-	action &= ~((iint->flags & IMA_DONE_MASK) >> 1);
+	action &= ~((iint->flags & done_mask) >> 1);
 
 	/* Nothing to do, just return existing appraised status */
 	if (!action) {

@@ -373,7 +373,8 @@ enum {
 	Opt_obj_user, Opt_obj_role, Opt_obj_type,
 	Opt_subj_user, Opt_subj_role, Opt_subj_type,
 	Opt_func, Opt_mask, Opt_fsmagic, Opt_uid, Opt_fowner,
-	Opt_appraise_type, Opt_fsuuid, Opt_permit_directio
+	Opt_appraise_type, Opt_fsuuid, Opt_permit_directio,
+	Opt_no_cache,
 };
 
 static match_table_t policy_tokens = {
@@ -396,6 +397,7 @@ static match_table_t policy_tokens = {
 	{Opt_fowner, "fowner=%s"},
 	{Opt_appraise_type, "appraise_type=%s"},
 	{Opt_permit_directio, "permit_directio"},
+	{Opt_no_cache, "no_cache"},
 	{Opt_err, NULL}
 };
 
@@ -647,6 +649,9 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			break;
 		case Opt_permit_directio:
 			entry->flags |= IMA_PERMIT_DIRECTIO;
+			break;
+		case Opt_no_cache:
+			entry->flags |= IMA_NO_CACHE;
 			break;
 		case Opt_err:
 			ima_log_string(ab, "UNKNOWN", p);
