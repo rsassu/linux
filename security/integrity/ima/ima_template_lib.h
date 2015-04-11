@@ -26,6 +26,8 @@ void ima_show_template_string(struct seq_file *m, enum ima_show_type show,
 			      struct ima_field_data *field_data);
 void ima_show_template_sig(struct seq_file *m, enum ima_show_type show,
 			   struct ima_field_data *field_data);
+void ima_show_template_uint(struct seq_file *m, enum ima_show_type show,
+			    struct ima_field_data *field_data);
 int ima_eventdigest_init(struct ima_event_data *event_data,
 			 struct ima_field_data *field_data);
 int ima_eventname_init(struct ima_event_data *event_data,
