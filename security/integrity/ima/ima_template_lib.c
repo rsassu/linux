@@ -362,8 +362,9 @@ int ima_exec_digest_ng_init(struct ima_event_data *event_data,
 	struct integrity_iint_cache *current_iint;
 	struct file *current_file;
 	struct mm_struct *mm;
-	u8 *cur_digest = NULL, hash_algo = HASH_ALGO_SHA1;
+	u8 *cur_digest = NULL;
 	u32 cur_digestsize = 0;
+	u8 cur_digestalgo = HASH_ALGO_SHA1;
 
 	mm = get_task_mm(current);
 	if (!mm)
@@ -381,11 +382,12 @@ int ima_exec_digest_ng_init(struct ima_event_data *event_data,
 
 	cur_digest = current_iint->ima_hash->digest;
 	cur_digestsize = current_iint->ima_hash->length;
+	cur_digestalgo = current_iint->ima_hash->algo;
 out_fput:
 	fput(current_file);
 out:
 	return ima_eventdigest_init_common(cur_digest, cur_digestsize,
-					   hash_algo, field_data);
+					   cur_digestalgo, field_data);
 }
 
 int ima_process_uid_init(struct ima_event_data *event_data,
