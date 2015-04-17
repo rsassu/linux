@@ -70,7 +70,8 @@ descriptors by adding their identifier to the format string
  - 'p-uid': the real UID of the current process;
  - 'hook-id': the IMA hook identifier (e.g. FILE_CHECK = 1, MMAP_CHECK = 2 ...);
  - 'hook-mask': the value of the mask passed to IMA hooks (4 for MAY_READ,
-                2 for MAY_WRITE, 1 for MAY_EXEC, or a sum of them).
+                2 for MAY_WRITE, 1 for MAY_EXEC, or a sum of them);
+ - 'fowner': the UID of the file owner.
 
 
 Below, there is the list of defined template descriptors:

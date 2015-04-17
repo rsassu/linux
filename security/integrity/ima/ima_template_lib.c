@@ -420,3 +420,22 @@ int ima_hook_mask_init(struct ima_event_data *event_data,
 					     sizeof(u32), DATA_FMT_UINT,
 					     field_data);
 }
+
+/*
+ * ima_fowner_init - include the owner of the file being measured
+ */
+int ima_fowner_init(struct ima_event_data *event_data,
+		    struct ima_field_data *field_data)
+{
+	struct inode *inode;
+	u32 fowner_uid = 0;
+
+	if (!event_data->file)
+		goto out;
+
+	inode = file_inode(event_data->file);
+	fowner_uid = from_kuid(&init_user_ns, inode->i_uid);
+out:
+	return ima_write_template_field_data((u32 *)&fowner_uid, sizeof(u32),
+					     DATA_FMT_UINT, field_data);
+}
