@@ -14,7 +14,7 @@
  */
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#define ext_fmt "exec-d-ng|p-uid|hook-id|hook-mask"
+#define ext_fmt "exec-d-ng|p-uid|hook-id|hook-mask|fowner"
 
 #include <crypto/hash_info.h>
 

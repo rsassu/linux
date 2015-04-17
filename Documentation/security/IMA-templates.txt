@@ -80,6 +80,11 @@ Below, there is the list of defined template descriptors:
  - "ima-sig": its format is 'd-ng|n-ng|sig'.
 
 
+Finally, by specifying the 'ima_ext_fmt' kernel parameter, the template format
+will be:
+
+<format of the current template> + "|exec-d-ng|p-uid|hook-id|hook-mask|fowner"
+
 
 ==== USE ====
 
@@ -91,4 +96,6 @@ currently the following methods are supported:
  - specify a template descriptor name from the kernel command line through
    the 'ima_template=' parameter;
  - register a new template descriptor with custom format through the kernel
-   command line parameter 'ima_template_fmt='.
+   command line parameter 'ima_template_fmt=';
+ - in addition to one of the previous options, add the option 'ima_ext_fmt'
+   to the kernel command line.
