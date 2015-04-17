@@ -390,6 +390,9 @@ out:
 					   cur_digestalgo, field_data);
 }
 
+/*
+ * ima_process_uid_init - include the real UID of the current process
+ */
 int ima_process_uid_init(struct ima_event_data *event_data,
 			 struct ima_field_data *field_data)
 {
