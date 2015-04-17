@@ -281,8 +281,15 @@ void ima_store_measurement(struct integrity_iint_cache *iint,
 	}
 
 	result = ima_store_template(entry, violation, inode, filename);
-	if (!result || result == -EEXIST)
-		iint->flags |= IMA_MEASURED;
+	if (!result || result == -EEXIST) {
+		/* Skipping to set IMA_MEASURED if the 'no_cache' policy option
+		 * is specified ensures that a new entry is added to the list
+		 * if one tries to switch from measure for each process to
+		 * measure only once strategy (e.g. by changing fowner).
+		 */
+		if (!(iint->flags & IMA_NO_CACHE))
+			iint->flags |= IMA_MEASURED;
+	}
 	if (result < 0)
 		ima_free_template_entry(entry);
 }
